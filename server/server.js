@@ -16,7 +16,12 @@ connectDB();
 const app = express();
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3050', 'https://web-based-royal-pharmacy-system-4q6qtbhfu.vercel.app'],
+  origin: function(origin, callback) {
+    if (!origin || origin.includes('localhost') || origin.includes('vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());
