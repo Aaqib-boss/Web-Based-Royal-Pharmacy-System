@@ -1,0 +1,17 @@
+{
+  "name": "royal-pharmacy-root",
+  "version": "1.0.0",
+  "description": "Royal Pharmacy Management System - MERN Stack Full Project",
+  "main": "server/server.js",
+  "scripts": {
+    "install-all": "npm install && npm install --prefix server && npm install --prefix client",
+    "server": "node server/server.js",
+    "server-dev": "nodemon server/server.js",
+    "client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run server-dev\" \"npm run client\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.0"
+  }
+}

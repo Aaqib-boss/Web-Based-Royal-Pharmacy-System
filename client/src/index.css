@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply transition-colors duration-300 font-sans antialiased text-slate-800 dark:text-slate-100 bg-lightBg dark:bg-darkBg;
+    margin: 0;
+  }
+}
+
+/* Premium Glassmorphism Panels */
+.glass-panel {
+  @apply bg-white/80 dark:bg-darkBg-card/75 backdrop-blur-xl border border-emerald-100/20 dark:border-white/5 shadow-[0_10px_35px_rgba(0,0,0,0.03)] dark:shadow-[0_15px_40px_rgba(0,0,0,0.3)] transition-all duration-300;
+}
+
+/* Premium Hover Transitions */
+.card-hover {
+  @apply hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-950/5 dark:hover:shadow-emerald-950/20 transition-all duration-300;
+}
+
+/* Soft Ring Focus Glow */
+.focus-glow {
+  @apply focus:outline-none focus:ring-4 focus:ring-primary/10 dark:focus:ring-primary-emerald/10 focus:border-primary dark:focus:border-primary-emerald transition-all duration-200;
+}
+
+/* Custom styles for React Datepicker to match our Teal/Gold theme */
+.react-datepicker {
+  @apply font-sans border-slate-100 dark:border-white/5 bg-white/95 dark:bg-darkBg-card/95 backdrop-blur-md text-slate-800 dark:text-white rounded-2xl shadow-2xl !important;
+}
+
+.react-datepicker__header {
+  @apply bg-primary text-white border-b border-slate-100 dark:border-white/5 rounded-t-2xl !important;
+}
+
+.react-datepicker__current-month,
+.react-datepicker__day-name,
+.react-datepicker-time__header {
+  @apply text-white/90 font-bold !important;
+}
+
+.react-datepicker__day {
+  @apply text-slate-800 dark:text-slate-200 hover:bg-primary-emerald hover:text-white rounded-lg transition-all !important;
+}
+
+.react-datepicker__day--selected {
+  @apply bg-primary text-white font-semibold rounded-lg !important;
+}
+
+.react-datepicker__day--keyboard-selected {
+  @apply bg-primary-emerald/20 text-primary-emerald rounded-lg !important;
+}
+
+/* Custom scrollbar for modern aesthetics */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 dark:bg-emerald-950/40 rounded-full hover:bg-slate-300 dark:hover:bg-emerald-900/40;
+}
+
+table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: center !important;
+  padding: 13px 16px !important;
+  vertical-align: middle !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+td {
+  text-align: center !important;
+  padding: 13px 16px !important;
+  vertical-align: middle !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* TABLE 2 - Cash Table */
+.cash-table th:nth-child(1),
+.cash-table td:nth-child(1) { width: 15%; }  /* DATE */
+
+.cash-table th:nth-child(2),
+.cash-table td:nth-child(2) { width: 20%; }  /* INVOICE NO */
+
+.cash-table th:nth-child(3),
+.cash-table td:nth-child(3) { width: 35%; }  /* PHARMACY & CITY */
+
+.cash-table th:nth-child(4),
+.cash-table td:nth-child(4) { width: 20%; }  /* AMOUNT RECEIVED */
+
+.cash-table th:nth-child(5),
+.cash-table td:nth-child(5) { width: 10%; }  /* ACTIONS */
+
+/* TABLE 3 - Cheque Table */
+.cheque-table th:nth-child(1) { width: 15%; }
+.cheque-table th:nth-child(2) { width: 18%; }
+.cheque-table th:nth-child(3) { width: 25%; }
+.cheque-table th:nth-child(4) { width: 20%; }
+.cheque-table th:nth-child(5) { width: 14%; }
+.cheque-table th:nth-child(6) { width: 8%; }
+
+/* TABLE 5 - Product Table */
+.product-table th:nth-child(1),
+.product-table td:nth-child(1) {
+  width: 37.5%;
+}
+.product-table th:nth-child(2),
+.product-table td:nth-child(2) {
+  width: 25%;
+}
+.product-table th:nth-child(3),
+.product-table td:nth-child(3) {
+  width: 37.5%;
+}
+
+/* Allow multi-line content to stack and wrap normally */
+.multiline-cell {
+  white-space: normal !important;
+}
+
+/* TABLE 1 - Return Table */
+.return-table th:nth-child(1),
+.return-table td:nth-child(1) { width: 10%; } /* DATE */
+
+.return-table th:nth-child(2),
+.return-table td:nth-child(2) { width: 10%; } /* INVOICE NO */
+
+.return-table th:nth-child(3),
+.return-table td:nth-child(3) { width: 17%; } /* PHARMACY & CITY */
+
+.return-table th:nth-child(4),
+.return-table td:nth-child(4) { width: 9%; }  /* REF NAME */
+
+.return-table th:nth-child(5),
+.return-table td:nth-child(5) { width: 17%; } /* PRODUCTS */
+
+.return-table th:nth-child(6),
+.return-table td:nth-child(6) { width: 6%; }  /* QTY */
+
+.return-table th:nth-child(7),
+.return-table td:nth-child(7) { width: 6%; }  /* BONUS */
+
+.return-table th:nth-child(8),
+.return-table td:nth-child(8) { width: 16%; } /* REASON & NOTES */
+
+.return-table th:nth-child(9),
+.return-table td:nth-child(9) { width: 9%; }  /* ACTIONS */
