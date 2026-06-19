@@ -1,9 +1,7 @@
 import axios from 'axios';
-
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'https://web-based-royal-pharmacy-system.onrender.com/api',
 });
-
 // Interceptor to inject JWT authentication token
 api.interceptors.request.use(
   (config) => {
@@ -19,7 +17,6 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-
 // Interceptor to handle 401 Unauthorized responses
 api.interceptors.response.use(
   (response) => {
@@ -41,5 +38,4 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 export default api;
