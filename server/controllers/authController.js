@@ -1,10 +1,11 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const SibApiV3Sdk = require('@getbrevo/brevo');
+const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
 const User = require('../models/user');
 
-const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-apiInstance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+const mailerSend = new MailerSend({
+  apiKey: process.env.MAILERSEND_API_KEY,
+});
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'royal_secret_key_12345', {
@@ -56,25 +57,28 @@ const forgotPassword = async (req, res) => {
     const resetUrl = `https://web-based-royal-pharmacy-system.vercel.app/login?token=${resetToken}`;
 
     try {
-      const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
-      sendSmtpEmail.subject = 'Royal Pharmacy - Password Recovery OTP';
-      sendSmtpEmail.to = [{ email: email }];
-      sendSmtpEmail.sender = { name: 'Royal Pharmacy', email: 'mohamedhilmy872@gmail.com' };
-      sendSmtpEmail.htmlContent = `
-        <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 500px;">
-          <h2 style="color: #10b981;">Password Recovery</h2>
-          <p>Your Royal Pharmacy recovery OTP is:</p>
-          <div style="font-size: 24px; font-weight: bold; letter-spacing: 4px; padding: 10px 0; color: #047857;">${otp}</div>
-          <p>Use the link below to reset your password:</p>
-          <a href="${resetUrl}" style="display: inline-block; background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 10px 0;">Reset Password</a>
-          <p style="color: #64748b; font-size: 12px; margin-top: 20px;">This OTP is valid for 5 minutes. If you did not request this, please ignore this email.</p>
-        </div>
-      `;
+      const sentFrom = new Sender('MS_noreply@test-3m5jgrorywzgdpyo.mlsender.net', 'Royal Pharmacy');
+      const recipients = [new Recipient(email)];
 
-      await apiInstance.sendTransacEmail(sendSmtpEmail);
+      const emailParams = new EmailParams()
+        .setFrom(sentFrom)
+        .setTo(recipients)
+        .setSubject('Royal Pharmacy - Password Recovery OTP')
+        .setHtml(`
+          <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 500px;">
+            <h2 style="color: #10b981;">Password Recovery</h2>
+            <p>Your Royal Pharmacy recovery OTP is:</p>
+            <div style="font-size: 24px; font-weight: bold; letter-spacing: 4px; padding: 10px 0; color: #047857;">${otp}</div>
+            <p>Use the link below to reset your password:</p>
+            <a href="${resetUrl}" style="display: inline-block; background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 10px 0;">Reset Password</a>
+            <p style="color: #64748b; font-size: 12px; margin-top: 20px;">This OTP is valid for 5 minutes. If you did not request this, please ignore this email.</p>
+          </div>
+        `);
+
+      await mailerSend.email.send(emailParams);
       console.log(`Email sent successfully to ${email}`);
     } catch (mailError) {
-      console.error('Brevo failed:', mailError.message);
+      console.error('Mailersend failed:', mailError.message);
       console.log(`OTP Code: ${otp}`);
     }
 
