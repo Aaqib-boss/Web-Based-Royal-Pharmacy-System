@@ -18,7 +18,7 @@ A premium MERN (MongoDB, Express.js, React, Node.js) stack web application desig
 * **Clearance Ledgers**: Fully audited registers for **Cash Payments Collection** and **Cheques Clearance Management** (recording bank name, cheque number, status, and amounts).
 * **Master Directories**: Complete CRUD directories for **Pharmacies** (enforcing strict 10-digit contact numbers), **Products** (inventory catalog and pricing), and **Reasons for Returns**.
 * **Advanced Autocomplete Search**: Dynamic, pre-fetched multi-select and single-select autocomplete boxes for instant product, pharmacy, and reason selection.
-* **Email OTP Recovery**: Secure password reset using a 6-digit OTP code sent directly to the user's registered email address via Resend API and a verified custom domain.
+* **Email OTP Recovery**: Secure password reset using a 6-digit OTP code sent directly to the user's registered email address via Mailersend transactional email API.
 * **Document Exports & Reporting**: One-click generation of professional branded PDF reports, direct print views, and downloadable Excel spreadsheets.
 * **Security & Isolation**: JWT token authorization, complete user-based data isolation, and cascading account deletion (automatically scrubs cash entries, cheques, returns, pharmacies, and products linked to a deleted profile).
 
@@ -38,7 +38,7 @@ A premium MERN (MongoDB, Express.js, React, Node.js) stack web application desig
 - **Node.js & Express.js** (REST API)
 - **MongoDB & Mongoose** (NoSQL modeling & schemas)
 - **JSON Web Tokens (JWT)** (Secure authentication sessions)
-- **Resend API** (Email OTP delivery via verified custom domain)
+- **Mailersend** (Transactional email OTP delivery)
 - **Multer** (Profile photo uploads)
 
 ---
@@ -56,7 +56,7 @@ PORT=5000
 MONGO_URI=your_mongodb_uri
 JWT_SECRET=your_jwt_secret
 NODE_ENV=development
-RESEND_API_KEY=your_resend_api_key
+MAILERSEND_API_KEY=your_mailersend_api_key
 ```
 
 ### 2. Install Dependencies
