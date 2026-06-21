@@ -1,9 +1,11 @@
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
-const { Resend } = require('resend');
+const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
 const User = require('../models/user');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const mailerSend = new MailerSend({
+  apiKey: process.env.MAILERSEND_API_KEY,
+});
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'royal_secret_key_12345', {
@@ -55,11 +57,14 @@ const forgotPassword = async (req, res) => {
     const resetUrl = `https://web-based-royal-pharmacy-system.vercel.app/login?token=${resetToken}`;
 
     try {
-      await resend.emails.send({
-        from: 'Royal Pharmacy <noreply@royalpharmacy.xyz>',
-        to: email,
-        subject: 'Royal Pharmacy - Password Recovery OTP',
-        html: `
+      const sentFrom = new Sender('MS_noreply@test-3m5jgrorywzgdpyo.mlsender.net', 'Royal Pharmacy');
+      const recipients = [new Recipient(email)];
+
+      const emailParams = new EmailParams()
+        .setFrom(sentFrom)
+        .setTo(recipients)
+        .setSubject('Royal Pharmacy - Password Recovery OTP')
+        .setHtml(`
           <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 500px;">
             <h2 style="color: #10b981;">Password Recovery</h2>
             <p>Your Royal Pharmacy recovery OTP is:</p>
@@ -68,11 +73,12 @@ const forgotPassword = async (req, res) => {
             <a href="${resetUrl}" style="display: inline-block; background-color: #10b981; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 10px 0;">Reset Password</a>
             <p style="color: #64748b; font-size: 12px; margin-top: 20px;">This OTP is valid for 5 minutes. If you did not request this, please ignore this email.</p>
           </div>
-        `,
-      });
+        `);
+
+      await mailerSend.email.send(emailParams);
       console.log(`Email sent successfully to ${email}`);
     } catch (mailError) {
-      console.error('Resend failed:', mailError.message);
+      console.error('Mailersend failed:', mailError.message);
       console.log(`OTP Code: ${otp}`);
     }
 
