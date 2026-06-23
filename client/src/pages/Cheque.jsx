@@ -512,14 +512,20 @@ const Cheque = () => {
 
                 <div className="space-y-1.5">
                   <label className="text-xs uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
-                    City (Auto-filled)
+                    {/^[0-9a-fA-F]{24}$/.test(pharmacyId) ? "City (Auto-filled)" : "City"}
                   </label>
                   <input
                     type="text"
-                    readOnly
+                    required
                     value={city}
-                    placeholder="Select pharmacy first"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-darkBg-input text-slate-500 dark:text-slate-400 cursor-not-allowed text-sm font-semibold focus:outline-none"
+                    onChange={(e) => setCity(e.target.value)}
+                    readOnly={/^[0-9a-fA-F]{24}$/.test(pharmacyId)}
+                    placeholder={/^[0-9a-fA-F]{24}$/.test(pharmacyId) ? "Select pharmacy first" : "Enter city"}
+                    className={`w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/5 text-sm font-semibold focus:outline-none ${
+                      /^[0-9a-fA-F]{24}$/.test(pharmacyId)
+                        ? 'bg-slate-100 dark:bg-darkBg-input text-slate-400 dark:text-slate-500'
+                        : 'bg-transparent text-slate-800 dark:text-slate-100 focus:border-emerald-500/50'
+                    }`}
                   />
                 </div>
 
