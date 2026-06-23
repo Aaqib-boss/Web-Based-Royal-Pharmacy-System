@@ -22,13 +22,102 @@ const getReturns = async (req, res) => {
   }
 };
 
+// Helper to get or create a pharmacy and save a new reason
+const getOrCreatePharmacyAndReason = async (userId, pharmacyId, city, reason) => {
+  const mongoose = require('mongoose');
+  const Pharmacy = require('../models/pharmacy');
+  const Reason = require('../models/reason');
+
+  let finalPharmacyId = pharmacyId;
+  let finalCity = city;
+
+  // Check if pharmacyId is a valid ObjectId
+  const isValidObjectId = mongoose.Types.ObjectId.isValid(pharmacyId);
+
+  if (!isValidObjectId && pharmacyId) {
+    const trimmedName = String(pharmacyId).trim();
+    const trimmedCity = String(city || '').trim();
+
+    // Check if it already exists for this user
+    let pharmacy = await Pharmacy.findOne({
+      userId,
+      companyName: { $regex: new RegExp('^' + trimmedName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$', 'i') },
+      city: { $regex: new RegExp('^' + trimmedCity.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$', 'i') }
+    });
+
+    if (!pharmacy) {
+      pharmacy = await Pharmacy.create({
+        userId,
+        companyName: trimmedName,
+        refName: 'Staff',
+        address: 'Not Provided',
+        contactNumber: '0000000000',
+        city: trimmedCity || 'Not Provided'
+      });
+    }
+
+    finalPharmacyId = pharmacy._id;
+    finalCity = pharmacy.city;
+  }
+
+  // Check and save custom reason if provided
+  if (reason) {
+    const trimmedReason = String(reason).trim();
+    const reasonExists = await Reason.findOne({
+      userId,
+      reasonName: { $regex: new RegExp('^' + trimmedReason.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$', 'i') }
+    });
+
+    if (!reasonExists) {
+      await Reason.create({
+        userId,
+        reasonName: trimmedReason
+      });
+    }
+  }
+
+  return { finalPharmacyId, finalCity };
+};
+
+// Helper to resolve products: finds existing ones or dynamically creates new ones with price: 0
+const resolveProducts = async (userId, productsList) => {
+  const mongoose = require('mongoose');
+  const Product = require('../models/product');
+
+  const resolvedIds = [];
+
+  for (const prodIdentifier of productsList) {
+    if (mongoose.Types.ObjectId.isValid(prodIdentifier)) {
+      resolvedIds.push(prodIdentifier);
+    } else {
+      const trimmedName = String(prodIdentifier).trim();
+      let product = await Product.findOne({
+        userId,
+        productName: { $regex: new RegExp('^' + trimmedName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + '$', 'i') }
+      });
+
+      if (!product) {
+        product = await Product.create({
+          userId,
+          productName: trimmedName,
+          price: 0
+        });
+      }
+
+      resolvedIds.push(product._id);
+    }
+  }
+
+  return resolvedIds;
+};
+
 // @desc    Create a return entry
 // @route   POST /api/returns
 // @access  Private
 const createReturn = async (req, res) => {
   const { date, invoiceNumber, pharmacyId, city, products, qty, bonus, reason, notes } = req.body;
 
-  if (!invoiceNumber || !pharmacyId || !city || !products || !qty || !reason) {
+  if (!invoiceNumber || !pharmacyId || !products || !qty || !reason) {
     return res.status(400).json({ message: 'Required fields are missing' });
   }
 
@@ -41,16 +130,25 @@ const createReturn = async (req, res) => {
   }
 
   try {
+    const { finalPharmacyId, finalCity } = await getOrCreatePharmacyAndReason(
+      req.user._id,
+      pharmacyId,
+      city,
+      reason
+    );
+
+    const resolvedProducts = await resolveProducts(req.user._id, products);
+
     const newReturn = await Return.create({
       userId: req.user._id,
       date: date || new Date(),
       invoiceNumber,
-      pharmacyId,
-      city,
-      products,
+      pharmacyId: finalPharmacyId,
+      city: finalCity,
+      products: resolvedProducts,
       qty: qty.map(q => Number(q)),
       bonus: bonus ? bonus.map(b => Number(b)) : products.map(() => 0),
-      reason,
+      reason: String(reason).trim(),
       notes
     });
 
@@ -85,14 +183,28 @@ const updateReturn = async (req, res) => {
       return res.status(400).json({ message: 'Products and bonus counts mismatch' });
     }
 
+    let finalPharmacyId = pharmacyId || returnEntry.pharmacyId;
+    let finalCity = city || returnEntry.city;
+
+    if (pharmacyId || city || reason) {
+      const resolved = await getOrCreatePharmacyAndReason(
+        req.user._id,
+        pharmacyId || returnEntry.pharmacyId,
+        city || returnEntry.city,
+        reason || returnEntry.reason
+      );
+      finalPharmacyId = resolved.finalPharmacyId;
+      finalCity = resolved.finalCity;
+    }
+
     returnEntry.date = date || returnEntry.date;
     returnEntry.invoiceNumber = invoiceNumber || returnEntry.invoiceNumber;
-    returnEntry.pharmacyId = pharmacyId || returnEntry.pharmacyId;
-    returnEntry.city = city || returnEntry.city;
-    returnEntry.products = products || returnEntry.products;
+    returnEntry.pharmacyId = finalPharmacyId;
+    returnEntry.city = finalCity;
+    returnEntry.products = products ? await resolveProducts(req.user._id, products) : returnEntry.products;
     returnEntry.qty = qty ? qty.map(q => Number(q)) : returnEntry.qty;
     returnEntry.bonus = bonus ? bonus.map(b => Number(b)) : (returnEntry.bonus || returnEntry.products.map(() => 0));
-    returnEntry.reason = reason || returnEntry.reason;
+    returnEntry.reason = reason ? String(reason).trim() : returnEntry.reason;
     returnEntry.notes = notes !== undefined ? notes : returnEntry.notes;
 
     await returnEntry.save();

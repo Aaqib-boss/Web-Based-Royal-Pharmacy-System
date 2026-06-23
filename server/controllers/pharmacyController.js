@@ -25,16 +25,31 @@ const getPharmacies = async (req, res) => {
 // @route   POST /api/pharmacies
 // @access  Private
 const createPharmacy = async (req, res) => {
-  const { companyName, refName, address, contactNumber, city } = req.body;
+  const { companyName, refName, address, contactNumber, contactNumber2, city } = req.body;
 
   if (!companyName || !refName || !address || !contactNumber || !city) {
     return res.status(400).json({ message: 'All fields are required' });
   }
 
-  // Validate contact number (exactly 10 digits)
-  const digitsOnly = contactNumber.replace(/\D/g, '');
-  if (digitsOnly.length !== 10 || contactNumber.length !== 10) {
-    return res.status(400).json({ message: 'Contact number must be exactly 10 digits' });
+  // Validate contact number (multiple 10-digit numbers separated by commas)
+  const contactNumbers = contactNumber.split(',').map(n => n.trim()).filter(Boolean);
+  if (contactNumbers.length === 0) {
+    return res.status(400).json({ message: 'Please add at least one contact number' });
+  }
+  for (const num of contactNumbers) {
+    if (!/^\d{10}$/.test(num)) {
+      return res.status(400).json({ message: 'Each contact number must be exactly 10 digits' });
+    }
+  }
+
+  // Validate alternative contact number if provided (multiple numbers supported also)
+  if (contactNumber2) {
+    const contactNumbers2 = contactNumber2.split(',').map(n => n.trim()).filter(Boolean);
+    for (const num of contactNumbers2) {
+      if (!/^\d{10}$/.test(num)) {
+        return res.status(400).json({ message: 'Each alternative contact number must be exactly 10 digits' });
+      }
+    }
   }
 
   try {
@@ -44,6 +59,7 @@ const createPharmacy = async (req, res) => {
       refName,
       address,
       contactNumber,
+      contactNumber2: contactNumber2 || undefined,
       city
     });
 
@@ -57,7 +73,7 @@ const createPharmacy = async (req, res) => {
 // @route   PUT /api/pharmacies/:id
 // @access  Private
 const updatePharmacy = async (req, res) => {
-  const { companyName, refName, address, contactNumber, city } = req.body;
+  const { companyName, refName, address, contactNumber, contactNumber2, city } = req.body;
 
   try {
     const pharmacy = await Pharmacy.findOne({ _id: req.params.id, userId: req.user._id });
@@ -67,9 +83,23 @@ const updatePharmacy = async (req, res) => {
     }
 
     if (contactNumber) {
-      const digitsOnly = contactNumber.replace(/\D/g, '');
-      if (digitsOnly.length !== 10 || contactNumber.length !== 10) {
-        return res.status(400).json({ message: 'Contact number must be exactly 10 digits' });
+      const contactNumbers = contactNumber.split(',').map(n => n.trim()).filter(Boolean);
+      if (contactNumbers.length === 0) {
+        return res.status(400).json({ message: 'Please add at least one contact number' });
+      }
+      for (const num of contactNumbers) {
+        if (!/^\d{10}$/.test(num)) {
+          return res.status(400).json({ message: 'Each contact number must be exactly 10 digits' });
+        }
+      }
+    }
+
+    if (contactNumber2) {
+      const contactNumbers2 = contactNumber2.split(',').map(n => n.trim()).filter(Boolean);
+      for (const num of contactNumbers2) {
+        if (!/^\d{10}$/.test(num)) {
+          return res.status(400).json({ message: 'Each alternative contact number must be exactly 10 digits' });
+        }
       }
     }
 
@@ -77,6 +107,7 @@ const updatePharmacy = async (req, res) => {
     pharmacy.refName = refName || pharmacy.refName;
     pharmacy.address = address || pharmacy.address;
     pharmacy.contactNumber = contactNumber || pharmacy.contactNumber;
+    pharmacy.contactNumber2 = contactNumber2 !== undefined ? contactNumber2 : pharmacy.contactNumber2;
     pharmacy.city = city || pharmacy.city;
 
     const updatedPharmacy = await pharmacy.save();

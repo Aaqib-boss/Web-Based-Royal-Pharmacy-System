@@ -26,7 +26,7 @@ const Data = () => {
   const [companyName, setCompanyName] = useState('');
   const [refName, setRefName] = useState('');
   const [address, setAddress] = useState('');
-  const [contactNumber, setContactNumber] = useState('');
+  const [contactNumbers, setContactNumbers] = useState(['']);
   const [city, setCity] = useState('');
 
   // Form states - Product
@@ -93,7 +93,7 @@ const Data = () => {
     setCompanyName('');
     setRefName('');
     setAddress('');
-    setContactNumber('');
+    setContactNumbers(['']);
     setCity('');
     setProductName('');
     setPrice('');
@@ -116,7 +116,9 @@ const Data = () => {
       setCompanyName(item.companyName);
       setRefName(item.refName || '');
       setAddress(item.address);
-      setContactNumber(item.contactNumber);
+      const nums = item.contactNumber ? item.contactNumber.split(',').map(n => n.trim()) : [''];
+      if (item.contactNumber2) nums.push(item.contactNumber2);
+      setContactNumbers(nums);
       setCity(item.city);
     } else if (activeTab === 'products') {
       setProductName(item.productName);
@@ -133,19 +135,34 @@ const Data = () => {
     setLoading(true);
     try {
       if (activeTab === 'pharmacies') {
-        if (!companyName || !refName || !address || !contactNumber || !city) {
+        if (!companyName || !refName || !address || !city) {
           toast.warning('Please fill in all fields');
           setLoading(false);
           return;
         }
 
-        if (contactNumber.length !== 10) {
-          toast.error('Contact number must be exactly 10 digits');
+        const trimmedNums = contactNumbers.map(n => n.trim()).filter(Boolean);
+        if (trimmedNums.length === 0) {
+          toast.error('Please add at least one contact number');
           setLoading(false);
           return;
         }
+        for (const num of trimmedNums) {
+          if (num.length !== 10) {
+            toast.error('Each contact number must be exactly 10 digits');
+            setLoading(false);
+            return;
+          }
+        }
 
-        const payload = { companyName, refName, address, contactNumber, city };
+        const payload = { 
+          companyName, 
+          refName, 
+          address, 
+          contactNumber: trimmedNums.join(', '), 
+          contactNumber2: undefined, 
+          city 
+        };
 
         if (modalType === 'add') {
           const { data } = await api.post('/pharmacies', payload);
@@ -367,6 +384,11 @@ const Data = () => {
                         </td>
                         <td className="text-sm text-slate-600 dark:text-slate-300">
                           {pharma.contactNumber}
+                          {pharma.contactNumber2 && (
+                            <div className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+                              {pharma.contactNumber2}
+                            </div>
+                          )}
                         </td>
                         <td>
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary dark:text-primary-emerald border border-primary/10 dark:border-white/5">
@@ -559,34 +581,57 @@ const Data = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="text-xs uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
-                        Contact Number
-                      </label>
-                       <input
-                        type="text"
-                        required
-                        value={contactNumber}
-                        onChange={(e) => setContactNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                        maxLength={10}
-                        placeholder="e.g. 9876543210"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-darkBg-card text-slate-800 dark:text-slate-100 focus-glow transition-all duration-200 text-sm"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        placeholder="e.g. New York"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-darkBg-card text-slate-800 dark:text-slate-100 focus-glow transition-all duration-200 text-sm"
-                      />
-                    </div>
+                  <div className="space-y-3">
+                    <label className="text-xs uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                      Contact Numbers
+                    </label>
+                    {contactNumbers.map((num, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          required={index === 0}
+                          value={num}
+                          onChange={(e) => {
+                            const updated = [...contactNumbers];
+                            updated[index] = e.target.value.replace(/\D/g, '').slice(0, 10);
+                            setContactNumbers(updated);
+                          }}
+                          maxLength={10}
+                          placeholder={`Contact Number ${index + 1}`}
+                          className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-darkBg-card text-slate-800 dark:text-slate-100 focus-glow transition-all duration-200 text-sm"
+                        />
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setContactNumbers(contactNumbers.filter((_, i) => i !== index))}
+                            className="p-2.5 rounded-xl text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-darkBg-input transition-all"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setContactNumbers([...contactNumbers, ''])}
+                      className="inline-flex items-center text-xs font-bold text-primary dark:text-primary-emerald hover:underline"
+                    >
+                      <Plus className="w-4 h-4 mr-1" /> Add Contact Number
+                    </button>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="e.g. New York"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-darkBg-card text-slate-800 dark:text-slate-100 focus-glow transition-all duration-200 text-sm"
+                    />
                   </div>
                 </>
               ) : activeTab === 'products' ? (

@@ -417,8 +417,13 @@ const Return = () => {
       toast.warning('Invoice Number is required');
       return;
     }
-    if (!pharmacyId) {
-      toast.warning('Please select a valid pharmacy from autocomplete matches');
+    const isExistingPharma = /^[0-9a-fA-F]{24}$/.test(pharmacyId);
+    if (!isExistingPharma && !pharmacyName.trim()) {
+      toast.warning('Pharmacy Name is required');
+      return;
+    }
+    if (!isExistingPharma && !city.trim()) {
+      toast.warning('City is required for new pharmacy');
       return;
     }
     if (selectedProducts.length === 0) {
@@ -433,7 +438,7 @@ const Return = () => {
     const payload = {
       date,
       invoiceNumber,
-      pharmacyId,
+      pharmacyId: pharmacyId || pharmacyName,
       city,
       products: selectedProducts.map((p) => p._id),
       qty: selectedProducts.map((p) => p.qty),
@@ -574,17 +579,22 @@ const Return = () => {
                   />
                 </div>
 
-                {/* City (Auto-filled) */}
+                {/* City */}
                 <div className="space-y-1.5">
                   <label className="text-xs uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">
-                    City (Auto-filled)
+                    {/^[0-9a-fA-F]{24}$/.test(pharmacyId) ? "City (Auto-filled)" : "City"}
                   </label>
                   <input
                     type="text"
-                    readOnly
+                    readOnly={/^[0-9a-fA-F]{24}$/.test(pharmacyId)}
                     value={city}
-                    placeholder="Select pharmacy first"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-darkBg-input text-slate-500 dark:text-slate-400 cursor-not-allowed text-sm font-semibold focus:outline-none"
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder={/^[0-9a-fA-F]{24}$/.test(pharmacyId) ? "Select pharmacy first" : "Enter city"}
+                    className={`w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/5 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus-glow transition-all duration-200 text-sm ${
+                      /^[0-9a-fA-F]{24}$/.test(pharmacyId)
+                        ? 'bg-slate-100 dark:bg-darkBg-input text-slate-500 dark:text-slate-400 cursor-not-allowed font-semibold focus:outline-none'
+                        : 'bg-white dark:bg-darkBg-card'
+                    }`}
                   />
                 </div>
 

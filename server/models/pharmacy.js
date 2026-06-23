@@ -25,6 +25,10 @@ const pharmacySchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add a contact number'],
     },
+    contactNumber2: {
+      type: String,
+      required: false,
+    },
     city: {
       type: String,
       required: [true, 'Please add a city'],
