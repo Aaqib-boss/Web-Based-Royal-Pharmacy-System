@@ -2,6 +2,9 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { MailerSend, EmailParams, Sender, Recipient } = require('mailersend');
 const User = require('../models/user');
+const Pharmacy = require('../models/pharmacy');
+const Product = require('../models/product');
+const Reason = require('../models/reason');
 
 const mailerSend = new MailerSend({
   apiKey: process.env.MAILERSEND_API_KEY,
@@ -11,6 +14,81 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'royal_secret_key_12345', {
     expiresIn: '30d',
   });
+};
+
+const cloneTemplatesForUser = async (user) => {
+  try {
+    // Find the Admin user (Royal Admin, name@gmail.com)
+    const adminUser = await User.findOne({ email: 'name@gmail.com' });
+    if (!adminUser) {
+      console.log('Admin user (name@gmail.com) not found. Skipping auto-cloning of templates.');
+      return;
+    }
+
+    const templatePharmacies = await Pharmacy.find({ userId: adminUser._id });
+    const templateProducts = await Product.find({ userId: adminUser._id });
+    const templateReasons = await Reason.find({ userId: adminUser._id });
+
+    // Clone Pharmacies
+    if (templatePharmacies.length > 0) {
+      const docs = templatePharmacies.map(p => {
+        const obj = p.toObject();
+        delete obj._id;
+        delete obj.createdAt;
+        delete obj.updatedAt;
+        obj.userId = user._id;
+        return obj;
+      });
+      await Pharmacy.insertMany(docs);
+      console.log(`Cloned ${docs.length} pharmacies for new user ${user.email}`);
+    }
+
+    // Clone Products
+    if (templateProducts.length > 0) {
+      const docs = templateProducts.map(p => {
+        const obj = p.toObject();
+        delete obj._id;
+        delete obj.createdAt;
+        delete obj.updatedAt;
+        obj.userId = user._id;
+        return obj;
+      });
+      await Product.insertMany(docs);
+      console.log(`Cloned ${docs.length} products for new user ${user.email}`);
+    }
+
+    // Clone Reasons or Seed Default Reasons
+    const defaultReasonsList = [
+      'Expired Product',
+      'Damaged Product',
+      'Shortage/Missing Item',
+      'Wrong Item Delivered',
+      'Near Expiry Date'
+    ];
+
+    let reasonsToInsert = [];
+    if (templateReasons.length > 0) {
+      reasonsToInsert = templateReasons.map(r => {
+        const obj = r.toObject();
+        delete obj._id;
+        delete obj.createdAt;
+        delete obj.updatedAt;
+        obj.userId = user._id;
+        return obj;
+      });
+    } else {
+      reasonsToInsert = defaultReasonsList.map(name => ({
+        userId: user._id,
+        reasonName: name
+      }));
+    }
+
+    await Reason.insertMany(reasonsToInsert);
+    console.log(`Cloned/Seeded ${reasonsToInsert.length} reasons for new user ${user.email}`);
+
+  } catch (error) {
+    console.error('Error cloning templates for user:', error.message);
+  }
 };
 
 const loginUser = async (req, res) => {
@@ -138,6 +216,7 @@ const createUser = async (req, res) => {
       name, email, password, role: role || 'User', phone, address,
     });
     if (user) {
+      await cloneTemplatesForUser(user);
       res.status(201).json({
         _id: user._id,
         name: user.name,
@@ -240,6 +319,7 @@ const registerUser = async (req, res) => {
       name, email, password, role: 'User', phone, address,
     });
     if (user) {
+      await cloneTemplatesForUser(user);
       res.status(201).json({
         _id: user._id,
         name: user.name,
