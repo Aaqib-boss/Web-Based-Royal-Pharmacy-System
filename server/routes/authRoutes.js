@@ -12,6 +12,7 @@ const {
   updateProfilePhoto,
   deleteProfilePhoto,
   deleteAccount,
+  getUserProfile,
 } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
@@ -29,6 +30,7 @@ router.put('/users/:id', protect, admin, updateUser);
 router.delete('/users/:id', protect, admin, deleteUser);
 
 // Profile routes
+router.get('/profile', protect, getUserProfile);
 router.put('/profile/photo', protect, upload.single('profilePhoto'), updateProfilePhoto);
 router.delete('/profile/photo', protect, deleteProfilePhoto);
 router.delete('/profile', protect, deleteAccount);

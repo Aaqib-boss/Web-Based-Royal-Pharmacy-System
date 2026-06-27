@@ -8,16 +8,24 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is stored in localStorage
-    const storedUser = localStorage.getItem('userInfo');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        localStorage.removeItem('userInfo');
+    const checkUserSession = async () => {
+      const storedUser = localStorage.getItem('userInfo');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+          // Fetch latest user details (like updated profile photo) from database
+          const { data } = await api.get('/auth/profile');
+          const mergedUser = { ...userData, ...data };
+          setUser(mergedUser);
+          localStorage.setItem('userInfo', JSON.stringify(mergedUser));
+        } catch (e) {
+          console.error('Error refreshing session:', e);
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+    checkUserSession();
   }, []);
 
   const login = async (email, password) => {
