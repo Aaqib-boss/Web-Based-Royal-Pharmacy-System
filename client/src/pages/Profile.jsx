@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import { Camera, Trash2, Shield, UserPlus, Users, Loader2, X, Plus, Edit2, Phone, Mail, User, MapPin } from 'lucide-react';
 
 const Profile = () => {
-  const { user, updateProfilePhoto, deleteProfilePhoto, logout } = useAuth();
+  const { user, updateProfilePhoto, deleteProfilePhoto, logout, setUser } = useAuth();
   const fileInputRef = useRef(null);
 
   // States
@@ -36,6 +36,19 @@ const Profile = () => {
 
   // Self account delete state
   const [showDeleteSelfConfirm, setShowDeleteSelfConfirm] = useState(false);
+
+  // Refresh profile details on mount
+  useEffect(() => {
+    const refreshProfile = async () => {
+      try {
+        const { data } = await api.get('/auth/profile');
+        setUser({ ...user, ...data });
+      } catch (err) {
+        console.error('Failed to refresh profile:', err);
+      }
+    };
+    refreshProfile();
+  }, []);
 
   useEffect(() => {
     if (user && user.role === 'Admin') {
