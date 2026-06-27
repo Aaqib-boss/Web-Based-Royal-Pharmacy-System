@@ -300,12 +300,18 @@ const createCashEntry = async (req, res) => {
   }
 
   try {
+    const { finalPharmacyId, finalCity } = await getOrCreatePharmacyAndReason(
+      req.user._id,
+      pharmacyId,
+      city
+    );
+
     const cash = await Cash.create({
       userId: req.user._id,
       date: date || new Date(),
       invoiceNumber,
-      pharmacyId,
-      city,
+      pharmacyId: finalPharmacyId,
+      city: finalCity,
       amount: Number(amount)
     });
 
@@ -329,10 +335,23 @@ const updateCashEntry = async (req, res) => {
       return res.status(404).json({ message: 'Cash entry not found or unauthorized' });
     }
 
+    let finalPharmacyId = pharmacyId || cash.pharmacyId;
+    let finalCity = city || cash.city;
+
+    if (pharmacyId || city) {
+      const resolved = await getOrCreatePharmacyAndReason(
+        req.user._id,
+        pharmacyId || cash.pharmacyId,
+        city || cash.city
+      );
+      finalPharmacyId = resolved.finalPharmacyId;
+      finalCity = resolved.finalCity;
+    }
+
     cash.date = date || cash.date;
     cash.invoiceNumber = invoiceNumber || cash.invoiceNumber;
-    cash.pharmacyId = pharmacyId || cash.pharmacyId;
-    cash.city = city || cash.city;
+    cash.pharmacyId = finalPharmacyId;
+    cash.city = finalCity;
     cash.amount = amount !== undefined ? Number(amount) : cash.amount;
 
     await cash.save();
@@ -420,12 +439,18 @@ const createChequeEntry = async (req, res) => {
   }
 
   try {
+    const { finalPharmacyId, finalCity } = await getOrCreatePharmacyAndReason(
+      req.user._id,
+      pharmacyId,
+      city
+    );
+
     const cheque = await Cheque.create({
       userId: req.user._id,
       date: date || new Date(),
       invoiceNumber,
-      pharmacyId,
-      city,
+      pharmacyId: finalPharmacyId,
+      city: finalCity,
       chequeNumber,
       bankName,
       amount: Number(amount)
@@ -451,10 +476,23 @@ const updateChequeEntry = async (req, res) => {
       return res.status(404).json({ message: 'Cheque entry not found or unauthorized' });
     }
 
+    let finalPharmacyId = pharmacyId || cheque.pharmacyId;
+    let finalCity = city || cheque.city;
+
+    if (pharmacyId || city) {
+      const resolved = await getOrCreatePharmacyAndReason(
+        req.user._id,
+        pharmacyId || cheque.pharmacyId,
+        city || cheque.city
+      );
+      finalPharmacyId = resolved.finalPharmacyId;
+      finalCity = resolved.finalCity;
+    }
+
     cheque.date = date || cheque.date;
     cheque.invoiceNumber = invoiceNumber || cheque.invoiceNumber;
-    cheque.pharmacyId = pharmacyId || cheque.pharmacyId;
-    cheque.city = city || cheque.city;
+    cheque.pharmacyId = finalPharmacyId;
+    cheque.city = finalCity;
     cheque.chequeNumber = chequeNumber || cheque.chequeNumber;
     cheque.bankName = bankName || cheque.bankName;
     cheque.amount = amount !== undefined ? Number(amount) : cheque.amount;
