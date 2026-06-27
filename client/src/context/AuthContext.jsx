@@ -28,6 +28,31 @@ export const AuthProvider = ({ children }) => {
     checkUserSession();
   }, []);
 
+  // Real-time synchronization loop (polls database every 3 seconds for photo updates)
+  useEffect(() => {
+    if (!user) return;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const { data } = await api.get('/auth/profile');
+        if (user.profilePhoto !== data.profilePhoto) {
+          setUser((currentUser) => {
+            if (currentUser) {
+              const updated = { ...currentUser, ...data };
+              localStorage.setItem('userInfo', JSON.stringify(updated));
+              return updated;
+            }
+            return currentUser;
+          });
+        }
+      } catch (err) {
+        // Silent catch for session expiry/logout
+      }
+    }, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [user]);
+
   const login = async (email, password) => {
     setLoading(true);
     try {
